@@ -1,0 +1,104 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  bio          String?
+  avatarUrl    String?
+  originPlaces String?  // JSON serialized string or comma-separated
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ancestors            Ancestor[]
+  connectionsRequested UserConnection[] @relation("Requester")
+  connectionsReceived  UserConnection[] @relation("Receiver")
+  matchesAsUser1       AncestorMatch[]  @relation("MatchUser1")
+  matchesAsUser2       AncestorMatch[]  @relation("MatchUser2")
+}
+
+model Ancestor {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName  String
+  lastName   String
+  maidenName String?
+  gender     String   @default("other") // male, female, other
+  birthYear  Int?
+  deathYear  Int?
+  birthPlace String?
+  deathPlace String?
+  bio        String?
+  photoUrl   String?
+
+  fatherId   String?
+  father     Ancestor?  @relation("FatherChild", fields: [fatherId], references: [id], onDelete: SetNull)
+  childrenAsFather Ancestor[] @relation("FatherChild")
+
+  motherId   String?
+  mother     Ancestor?  @relation("MotherChild", fields: [motherId], references: [id], onDelete: SetNull)
+  childrenAsMother Ancestor[] @relation("MotherChild")
+
+  spouseId   String?
+  spouse     Ancestor?  @relation("SpouseRelation", fields: [spouseId], references: [id], onDelete: SetNull)
+  spousesOf  Ancestor[] @relation("SpouseRelation")
+
+  matchesAs1 AncestorMatch[] @relation("Ancestor1Matches")
+  matchesAs2 AncestorMatch[] @relation("Ancestor2Matches")
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([lastName, firstName])
+  @@index([birthYear])
+}
+
+model UserConnection {
+  id               String   @id @default(uuid())
+  requesterId      String
+  requester        User     @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiverId       String
+  receiver         User     @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  status           String   @default("PENDING") // PENDING, ACCEPTED, REJECTED, BLOCKED
+  relationType     String   @default("RELATIVE") // RELATIVE, FRIEND
+  kinshipTitle     String?  // e.g. "Second Cousins via Arthur Vance"
+  commonAncestorId String?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([requesterId, receiverId])
+  @@index([requesterId, receiverId, status])
+}
+
+model AncestorMatch {
+  id           String   @id @default(uuid())
+  user1Id      String
+  user1        User     @relation("MatchUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2Id      String
+  user2        User     @relation("MatchUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+  ancestor1Id  String
+  ancestor1    Ancestor @relation("Ancestor1Matches", fields: [ancestor1Id], references: [id], onDelete: Cascade)
+  ancestor2Id  String
+  ancestor2    Ancestor @relation("Ancestor2Matches", fields: [ancestor2Id], references: [id], onDelete: Cascade)
+  matchScore   Float    // 0.00 to 100.00
+  status       String   @default("PENDING") // PENDING, ACCEPTED, DISMISSED
+  matchReasons String   @default("{}") // JSON string of metrics
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([ancestor1Id, ancestor2Id])
+  @@index([user1Id, user2Id, status])
+  @@index([matchScore])
+}
+

@@ -1,0 +1,33 @@
+{
+  "name": "rootsconnect",
+  "version": "1.0.0",
+  "description": "RootsConnect — Genealogy-based social network with smart fuzzy ancestor matching and kinship tree traversal",
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "db:push": "npm run db:push --prefix server",
+    "db:generate": "npm run db:generate --prefix server",
+    "db:seed": "npm run db:seed --prefix server",
+    "build:server": "npm run build --prefix server",
+    "build:client": "npm run build --prefix client",
+    "build": "npm run build:server && npm run build:client"
+  },
+  "keywords": [
+    "genealogy",
+    "family-tree",
+    "smart-matching",
+    "levenshtein",
+    "jaro-winkler",
+    "soundex",
+    "metaphone",
+    "kinship",
+    "cte",
+    "postgresql",
+    "react",
+    "vite"
+  ],
+  "author": "RootsConnect Architecture Team",
+  "license": "MIT"
+}
+
